@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daglig Rollfördelning</title>
+<style>
+  
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #111116;
+    color: #ededea;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .widget {
+    width: 300px;
+    background: #18181f;
+    border: 1px solid #26262f;
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .header-title {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #d6d6d6;
+  }
+
+  .date-chip {
+    font-size: 9px;
+    color: #d6d6d6;
+    letter-spacing: 0.06em;
+    font-style: italic;
+  }
+
+  
+
+  /* ── Row cards ── */
+  .rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .row-card {
+    display: flex;
+    align-items: center;
+    border-radius: 9px;
+    overflow: hidden;
+    height: 44px;
+    border: 1px solid transparent;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    position: relative;
+  }
+
+  .row-card.active {
+    border-color: var(--card-color);
+    box-shadow: 0 0 0 1px var(--card-color), 0 4px 20px -4px var(--card-glow);
+    transform: scaleX(1.012);
+  }
+
+  .color-bar {
+    width: 6px;
+    height: 100%;
+    background: var(--card-color);
+    flex-shrink: 0;
+  }
+
+  .row-inner {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    background: #1e1e28;
+    height: 100%;
+  }
+
+  .row-card.active .row-inner {
+    background: color-mix(in srgb, var(--card-color) 8%, #1e1e28);
+  }
+
+  .row-label {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--card-color);
+    opacity: 0.85;
+  }
+
+  .row-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #ededea;
+    letter-spacing: 0.02em;
+  }
+
+  .active-badge {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--card-color);
+    box-shadow: 0 0 6px var(--card-color);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  /* ── Test mode ── */
+  .test-section {
+    border-top: 1px solid #22222c;
+    padding-top: 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .test-label {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #44445a;
+  }
+
+  .test-controls {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .test-btn {
+    flex: 1;
+    padding: 7px 0;
+    background: #22222c;
+    border: 1px solid #2c2c3a;
+    border-radius: 7px;
+    color: #ededea;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: background 0.13s, border-color 0.13s, color 0.13s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .test-btn:hover { background: #292935; border-color: #38384a; }
+
+  .test-btn.playing {
+    color: #f0b429;
+    border-color: #f0b429;
+    background: color-mix(in srgb, #f0b429 8%, #22222c);
+  }
+
+  .step-indicator {
+    font-size: 9px;
+    color: #44445a;
+    letter-spacing: 0.08em;
+    text-align: center;
+    font-style: italic;
+    min-height: 12px;
+  }
+
+  /* ── Copy button ── */
+  .copy-btn {
+    width: 100%;
+    padding: 9px;
+    background: #1e1e27;
+    border: 1px solid #28283a;
+    border-radius: 9px;
+    color: #ededea;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: background 0.13s, border-color 0.13s, color 0.13s;
+    text-transform: uppercase;
+  }
+
+  .copy-btn:hover { background: #252530; border-color: #333345; }
+
+  .copy-btn.copied {
+    color: #3ecf8e;
+    border-color: #3ecf8e;
+    background: color-mix(in srgb, #3ecf8e 8%, #1e1e27);
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+    50% { opacity: 0.4; transform: translateY(-50%) scale(0.7); }
+  }
+
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .row-card { animation: slide-in 0.3s ease both; }
+  .row-card:nth-child(1) { animation-delay: 0.0s; }
+  .row-card:nth-child(2) { animation-delay: 0.07s; }
+  .row-card:nth-child(3) { animation-delay: 0.14s; }
+</style>
+</head>
+<body>
+<div class="widget">
+
+  <div class="header">
+    <span class="header-title">Rollfördelning</span>
+    <span class="date-chip" id="dateChip"></span>
+  </div>
+
+  <div class="rows" id="rows"></div>
+
+  <!-- <div class="test-section">
+    <div class="test-label">Testläge — steg per minut</div>
+    <div class="test-controls">
+      <button class="test-btn" id="prevBtn" onclick="stepBy(-1)">← Föregående</button>
+      <button class="test-btn" id="playBtn" onclick="togglePlay()">▶ Auto</button>
+      <button class="test-btn" id="nextBtn" onclick="stepBy(1)">Nästa →</button>
+    </div>
+    <div class="step-indicator" id="stepIndicator">Visar: idag</div>
+  </div> -->
+
+  <button class="copy-btn" id="copyBtn" onclick="copyRoles()">
+    <span>⎘</span> Kopiera roller
+  </button>
+
+</div>
+
+<script>
+  const ROLES = [
+    { label: 'Incident', color: '#e05555', glow: 'rgba(224,85,85,0.35)' },
+    { label: 'Change',   color: '#4a7fd4', glow: 'rgba(74,127,212,0.35)' },
+    { label: 'Övrigt',  color: '#3ecf8e', glow: 'rgba(62,207,142,0.35)' },
+  ];
+  const NAMES = ['Jonatan', 'Jonas', 'Michaela'];
+
+  // Real step = day-of-year % 3
+  function realDayStep() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    const dayOfYear = Math.floor((now - start) / 86400000);
+    return dayOfYear % 3;
+  }
+
+  let testOffset = 0;   // how many steps offset from real day
+  let playInterval = null;
+  let currentBase = realDayStep();
+
+  function getStep() {
+    return (currentBase + testOffset + 300) % 3;
+  }
+
+  function getAssignments(step) {
+    return ROLES.map((role, i) => ({
+      ...role,
+      name: NAMES[(i + step) % 3],
+    }));
+  }
+
+  function render() {
+    const step = getStep();
+    const assignments = getAssignments(step);
+
+    // Rows
+    const rowsEl = document.getElementById('rows');
+    rowsEl.innerHTML = '';
+    assignments.forEach((a, i) => {
+      const card = document.createElement('div');
+      card.className = 'row-card';
+      card.style.setProperty('--card-color', a.color);
+      card.style.setProperty('--card-glow', a.glow);
+      card.innerHTML = `
+        <div class="color-bar"></div>
+        <div class="row-inner">
+          <span class="row-label">${a.label}</span>
+          <span class="row-name">${a.name}</span>
+        </div>
+      `;
+      rowsEl.appendChild(card);
+    });
+
+    // Date chip
+    const now = new Date();
+    const opts = { weekday: 'short', day: 'numeric', month: 'short' };
+    document.getElementById('dateChip').textContent = now.toLocaleDateString('sv-SE', opts);
+
+    // Step indicator
+    const ind = document.getElementById('stepIndicator');
+    if (testOffset === 0) {
+      ind.textContent = 'Visar: idag (steg ' + (step + 1) + '/3)';
+    } else {
+      const label = testOffset > 0
+        ? `+${testOffset} dag${Math.abs(testOffset) !== 1 ? 'ar' : ''}`
+        : `${testOffset} dag${Math.abs(testOffset) !== 1 ? 'ar' : ''}`;
+      ind.textContent = `Visar: ${label} (steg ${step + 1}/3)`;
+    }
+  }
+
+  function stepBy(n) {
+    testOffset += n;
+    render();
+  }
+
+  function togglePlay() {
+    const btn = document.getElementById('playBtn');
+    if (playInterval) {
+      clearInterval(playInterval);
+      playInterval = null;
+      btn.classList.remove('playing');
+      btn.textContent = '▶ Auto';
+    } else {
+      btn.classList.add('playing');
+      btn.textContent = '⏹ Stop';
+      playInterval = setInterval(() => {
+        testOffset++;
+        render();
+      }, 1500); // 1.5s per step in auto mode (simulates "one per minute" fast)
+    }
+  }
+
+  function copyRoles() {
+    const step = getStep();
+    const assignments = getAssignments(step);
+    const text = assignments.map(a => `${a.label}: ${a.name}`).join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.classList.add('copied');
+      btn.innerHTML = '<span>✓</span> Kopierat!';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<span>⎘</span> Kopiera roller';
+      }, 2200);
+    });
+  }
+
+  render();
+</script>
+</body>
+</html>
